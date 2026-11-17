@@ -200,7 +200,6 @@ li:last-child{border:0}
 <script>
 (function(){
 var KEY="rotacerta:v1",dados=[];
-try{dados=JSON.parse(localStorage.getItem(KEY)||"[]")}catch(e){dados=[]}
 function salvar(){try{localStorage.setItem(KEY,JSON.stringify(dados))}catch(e){};cloudSave()}
 function $(i){return document.getElementById(i)}
 function brl(n){return n.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
@@ -257,7 +256,6 @@ if(editD&&String(editD)===id)limpaD();
 if(isF(id)){comb=comb.filter(function(x){return String(x.id)!==id});salvarC()}
 dados=dados.filter(function(x){return String(x.id)!==id});salvar();historico()};
 var KC="rotacerta:comb:v1",comb=[];
-try{comb=JSON.parse(localStorage.getItem(KC)||"[]")}catch(e){comb=[]}
 function salvarC(){try{localStorage.setItem(KC,JSON.stringify(comb))}catch(e){};cloudSave()}
 function num(id){return parseFloat($(id).value)||0}
 var editC=null;
@@ -292,7 +290,6 @@ if(e.target.getAttribute("data-act")==="e"){var f=comb.filter(function(x){return
 if(editC&&String(editC)===id)limpaC();
 comb=comb.filter(function(x){return String(x.id)!==id});dados=dados.filter(function(x){return String(x.id)!==id});salvarC();salvar();combustivel()};
 var KM="rotacerta:man:v1",man={odo:0,itens:[]};
-try{var sm=JSON.parse(localStorage.getItem(KM)||"null");if(sm&&sm.itens)man=sm}catch(e){}
 function salvarM(){try{localStorage.setItem(KM,JSON.stringify(man))}catch(e){};cloudSave()}
 function odoAtual(){var fm=0,fi=0;comb.forEach(function(x){fm=Math.max(fm,x.o);fi=Math.max(fi,x.id)});if(man.odo>0&&(man.at||0)>fi)return man.odo;return Math.max(man.odo||0,fm)}
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
@@ -361,7 +358,6 @@ $("bkf").onchange=function(){var f=this.files&&this.files[0];if(!f)return;var r=
 function nmes(k){var p=k.split("-"),s=new Date(+p[0],+p[1]-1,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"});return s.charAt(0).toUpperCase()+s.slice(1)}
 $("hmes").onchange=function(){historico()};
 var KT="rotacerta:meta:v1",meta={d:0,m:0};
-try{var mt=JSON.parse(localStorage.getItem(KT)||"null");if(mt)meta={d:Number(mt.d)||0,m:Number(mt.m)||0}}catch(e){}
 function salvarT(){try{localStorage.setItem(KT,JSON.stringify(meta))}catch(e){};cloudSave()}
 function barra(t,g,m){if(!(m>0))return "";var p=g/m*100;return '<div>'+t+': <b>'+brl(g)+'</b> <span class="mut">de '+brl(m)+' · '+Math.round(p)+'%</span></div><div class="pg'+(p>=100?' ok':'')+'"><i style="width:'+Math.min(p,100).toFixed(1)+'%"></i></div>'}
 function metas(){var h=hoje(),gd=0,gm=0;dados.forEach(function(x){if(x.t!=="g")return;if(x.dt===h)gd+=x.v;if(x.dt.slice(0,7)===h.slice(0,7))gm+=x.v});
@@ -389,24 +385,91 @@ $("hrm").onchange=function(){repM=this.value;relatorio()};
 $("rimp").onclick=function(){window.print()};
 $("rvolta").onclick=function(){aba(0)};
 resumo();alertas();destaques();metas();
+window.rotaSetUser=function(uid){
+ if(!uid)throw new Error("Usuário inválido");
+ KEY="rotacerta:"+uid+":v1";KC="rotacerta:"+uid+":comb:v1";KM="rotacerta:"+uid+":man:v1";KT="rotacerta:"+uid+":meta:v1";
+ try{dados=JSON.parse(localStorage.getItem(KEY)||"[]");if(!Array.isArray(dados))dados=[]}catch(e){dados=[]}
+ try{comb=JSON.parse(localStorage.getItem(KC)||"[]");if(!Array.isArray(comb))comb=[]}catch(e){comb=[]}
+ try{var sm=JSON.parse(localStorage.getItem(KM)||"null");man=sm&&Array.isArray(sm.itens)?sm:{odo:0,itens:[]}}catch(e){man={odo:0,itens:[]}}
+ try{var mt=JSON.parse(localStorage.getItem(KT)||"null");meta=mt?{d:Number(mt.d)||0,m:Number(mt.m)||0}:{d:0,m:0}}catch(e){meta={d:0,m:0}}
+ resumo();alertas();destaques();metas();historico();combustivel();manutencao();
+};
 window.rotaSnapshot=function(){return {app:"rota-certa",v:1,dados:dados,comb:comb,man:man,meta:meta}};
-window.rotaApplyCloud=function(o){if(!o||o.app!=="rota-certa"||!Array.isArray(o.dados)||!Array.isArray(o.comb))throw new Error("Dados da nuvem inválidos");dados=o.dados;comb=o.comb;man=o.man||man;meta=o.meta||meta;localStorage.setItem(KEY,JSON.stringify(dados));localStorage.setItem(KC,JSON.stringify(comb));localStorage.setItem(KM,JSON.stringify(man));localStorage.setItem(KT,JSON.stringify(meta));resumo();alertas();destaques();metas();historico();combustivel();manutencao()};
+window.rotaApplyCloud=function(o){if(!o||o.app!=="rota-certa"||!Array.isArray(o.dados)||!Array.isArray(o.comb))throw new Error("Dados da nuvem inválidos");dados=o.dados;comb=o.comb;man=o.man||{odo:0,itens:[]};meta=o.meta||{d:0,m:0};localStorage.setItem(KEY,JSON.stringify(dados));localStorage.setItem(KC,JSON.stringify(comb));localStorage.setItem(KM,JSON.stringify(man));localStorage.setItem(KT,JSON.stringify(meta));resumo();alertas();destaques();metas();historico();combustivel();manutencao()};
 })();
 </script>
 <script>
 (function(){
  const cfg={apiKey:"AIzaSyBEBIOgGhPHHhhCUp3YmEHN5rGzW3SWfSk",authDomain:"rota-certa-462d3.firebaseapp.com",projectId:"rota-certa-462d3",storageBucket:"rota-certa-462d3.firebasestorage.app",messagingSenderId:"288162102057",appId:"1:288162102057:web:5661577850ab44948ed538"};
  const msg=document.getElementById('authMsg'),gate=document.getElementById('authGate'),status=document.getElementById('syncStatus');
- let auth,db,user=null,ready=false,timer=null,saving=false;
+ let auth,db,user=null,ready=false,timer=null,saving=false,unsubscribe=null,authRun=0;
  function say(t){if(msg)msg.textContent=t}
  function statusText(t){if(status)status.textContent=t}
- function cloudSave(){if(!user||!ready)return;clearTimeout(timer);timer=setTimeout(async()=>{if(saving){cloudSave();return}try{saving=true;statusText('Sincronizando...');await db.doc('users/'+user.uid+'/app/state').set({...window.rotaSnapshot(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});statusText('Sincronizado com a nuvem');}catch(e){statusText('Falha na sincronização: '+(e.code||e.message));}finally{saving=false}},700)}
+ function cloudSave(){
+  if(!user||!ready)return;
+  const uid=user.uid;
+  clearTimeout(timer);
+  timer=setTimeout(async()=>{
+   if(!user||user.uid!==uid||!ready)return;
+   if(saving){cloudSave();return}
+   const payload={...window.rotaSnapshot(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
+   try{
+    saving=true;statusText('Sincronizando...');
+    await db.doc('users/'+uid+'/app/state').set(payload);
+    if(user&&user.uid===uid)statusText('Sincronizado com a nuvem');
+   }catch(e){
+    if(user&&user.uid===uid)statusText('Falha na sincronização: '+(e.code||e.message));
+   }finally{saving=false}
+  },700);
+ }
  window.cloudSave=cloudSave;
  try{firebase.initializeApp(cfg);auth=firebase.auth();db=firebase.firestore()}catch(e){say('Não foi possível iniciar o Firebase. Confira a conexão e a configuração.');return}
- document.getElementById('authLogin').onclick=async()=>{const email=document.getElementById('authEmail').value.trim(),pass=document.getElementById('authPass').value;if(!email||!pass){say('Informe e-mail e senha.');return}say('Entrando...');try{await auth.signInWithEmailAndPassword(email,pass)}catch(e){say(e.code==='auth/invalid-credential'?'E-mail ou senha incorretos.':e.message)}};
+ document.getElementById('authLogin').onclick=async()=>{
+  const email=document.getElementById('authEmail').value.trim(),pass=document.getElementById('authPass').value;
+  if(!email||!pass){say('Informe e-mail e senha.');return}
+  say('Entrando...');
+  try{await auth.signInWithEmailAndPassword(email,pass)}
+  catch(e){say(e.code==='auth/invalid-credential'?'E-mail ou senha incorretos.':e.message)}
+ };
  document.getElementById('authPass').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('authLogin').click()});
  document.getElementById('sair').onclick=()=>auth.signOut();
- auth.onAuthStateChanged(async u=>{user=u;ready=false;if(!u){gate.style.display='flex';document.body.classList.remove('authed');statusText('');return}say('');statusText('Verificando sua conta...');try{const ref=db.doc('users/'+u.uid+'/app/state'),snap=await ref.get();if(snap.exists){window.rotaApplyCloud(snap.data());statusText('Dados carregados da nuvem');}else{await ref.set({...window.rotaSnapshot(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});statusText('Primeira cópia enviada à nuvem');}ready=true;let firstSnapshot=true;ref.onSnapshot(doc=>{if(firstSnapshot){firstSnapshot=false;return}if(doc.exists&&ready){try{window.rotaApplyCloud(doc.data());statusText('Sincronizado em tempo real');}catch(err){statusText('Erro ao atualizar dados da nuvem');}}},err=>statusText('Erro na sincronização: '+(err.code||err.message)));gate.style.display='none';document.body.classList.add('authed');}catch(e){ready=false;gate.style.display='flex';say('Não foi possível acessar os dados: '+(e.code||e.message));statusText('Falha ao conectar');await auth.signOut().catch(()=>{});}});
+ auth.onAuthStateChanged(async u=>{
+  const run=++authRun;
+  clearTimeout(timer);timer=null;ready=false;
+  if(unsubscribe){unsubscribe();unsubscribe=null}
+  user=u||null;
+  if(!u){gate.style.display='flex';document.body.classList.remove('authed');statusText('');return}
+  say('');statusText('Verificando sua conta...');
+  try{
+   window.rotaSetUser(u.uid);
+   const ref=db.doc('users/'+u.uid+'/app/state');
+   const snap=await ref.get();
+   if(run!==authRun||!user||user.uid!==u.uid)return;
+   if(snap.exists){window.rotaApplyCloud(snap.data());statusText('Dados carregados da nuvem')}
+   else{
+    await ref.set({...window.rotaSnapshot(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+    if(run!==authRun||!user||user.uid!==u.uid)return;
+    statusText('Primeira cópia enviada à nuvem');
+   }
+   ready=true;
+   let firstSnapshot=true;
+   unsubscribe=ref.onSnapshot(doc=>{
+    if(firstSnapshot){firstSnapshot=false;return}
+    if(run!==authRun||!user||user.uid!==u.uid||!ready)return;
+    if(doc.exists){
+     try{window.rotaApplyCloud(doc.data());statusText('Sincronizado em tempo real')}
+     catch(err){statusText('Erro ao atualizar dados da nuvem')}
+    }
+   },err=>{if(user&&user.uid===u.uid)statusText('Erro na sincronização: '+(err.code||err.message))});
+   gate.style.display='none';document.body.classList.add('authed');
+  }catch(e){
+   if(run!==authRun)return;
+   ready=false;gate.style.display='flex';
+   say('Não foi possível acessar os dados: '+(e.code||e.message));
+   statusText('Falha ao conectar');
+   await auth.signOut().catch(()=>{});
+  }
+ });
 })();
 </script>
 </body>
